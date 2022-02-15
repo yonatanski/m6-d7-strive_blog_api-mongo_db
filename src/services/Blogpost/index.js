@@ -41,5 +41,35 @@ blogsRouter.get("/:blogId", async (req, res, next) => {
     next(error)
   }
 })
+// PUT WITH ID ***********************************************
+blogsRouter.put("/:blogId", async (req, res, next) => {
+  try {
+    const updateBlog = await BlogsModel.findByIdAndUpdate(req.params.blogId, req.body, {
+      new: true,
+    })
+
+    if (updateBlog) {
+      res.send(updateBlog)
+    } else {
+      next(createHttpError(404, `Blog witth id${eq.params.blogId} found!`))
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+// DELETE WITH ID ***********************************************
+blogsRouter.delete("/:blogId", async (req, res, next) => {
+  try {
+    const deltedBlog = await BlogsModel.findByIdAndDelete(req.params.blogId)
+
+    if (deltedBlog) {
+      res.send({ message: `USER WITH ID ${req.params.blogId} DELTED SUCCESSFULLY!` })
+    } else {
+      next(createHttpError(404, `Blog witth id${eq.params.blogId} found!`))
+    }
+  } catch (error) {
+    next(error)
+  }
+})
 
 export default blogsRouter
