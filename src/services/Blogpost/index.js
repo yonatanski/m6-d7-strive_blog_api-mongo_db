@@ -91,6 +91,21 @@ blogsRouter.delete("/:blogId", async (req, res, next) => {
     next(error)
   }
 })
+// *********************************************** Route for COMMENTS ***********************************************
+
+blogsRouter.post("/:blogId/comments", async (req, res, next) => {
+  try {
+    const findBlog = await BlogsModel.findById(req.body.blogId, { _id: 0 })
+    if (findBlog) {
+      const newComment = { ...findBlog }
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
+// *********************************************** END for COMMENTS ***********************************************
+
 // *********************************************** IMAGE UPLOAD ***********************************************
 blogsRouter.post("/:blogId/uploadSingleCover", cloudinaryUploader, async (req, res, next) => {
   try {

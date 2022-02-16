@@ -34,7 +34,14 @@ const blogSchema = new Schema(
     //   *************************************
     content: { type: String, required: false },
     //   *************************************
+    comment: [
+      {
+        userName: { type: String },
+        content: { type: String },
+      },
+    ],
   },
+
   {
     timestamps: true,
   }
