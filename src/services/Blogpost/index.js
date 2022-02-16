@@ -99,13 +99,13 @@ blogsRouter.post("/:blogId/comments", async (req, res, next) => {
     console.log("request params id,", req.body)
     const newComment = req.body
 
-    const getBlog = await BlogsModel.findByIdAndUpdate(req.params.blogId)
+    const getBlog = await BlogsModel.findByIdAndUpdate(req.params.blogId, {$push:{ comment: newComment }})
 
     console.log(getBlog)
     if (getBlog) {
-      const blogCommented = { ...getBlog.toObject(), comment: [...getBlog.comment, newComment] }
-      await getBlog.save()
-      res.send(blogCommented)
+      //   const blogCommented = { ...getBlog.toObject(), comment: [...getBlog.comment, newComment] }
+      //   await getBlog.save()
+      res.send(getBlog)
     }
   } catch (error) {
     next(error)
