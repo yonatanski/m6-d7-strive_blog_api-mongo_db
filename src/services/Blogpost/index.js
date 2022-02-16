@@ -95,9 +95,17 @@ blogsRouter.delete("/:blogId", async (req, res, next) => {
 
 blogsRouter.post("/:blogId/comments", async (req, res, next) => {
   try {
-    const findBlog = await BlogsModel.findById(req.body.blogId, { _id: 0 })
-    if (findBlog) {
-      const newComment = { ...findBlog }
+    console.log("request params id,", req.params.blogId)
+    console.log("request params id,", req.body)
+    const newComment = req.body
+
+    const getBlog = await BlogsModel.findByIdAndUpdate(req.params.blogId)
+
+    console.log(getBlog)
+    if (getBlog) {
+      const blogCommented = { ...getBlog.toObject(), comment: [...getBlog.comment, newComment] }
+      await getBlog.save()
+      res.send(blogCommented)
     }
   } catch (error) {
     next(error)
