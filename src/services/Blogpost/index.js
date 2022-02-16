@@ -1,6 +1,26 @@
 import express from "express"
 import createHttpError from "http-errors"
 import BlogsModel from "./schema.js"
+import multer from "multer" // it is middleware
+import { v2 as cloudinary } from "cloudinary"
+import { CloudinaryStorage } from "multer-storage-cloudinary"
+
+const cloudinaryUploader = multer({
+  storage: new CloudinaryStorage({
+    cloudinary, // search automatically for process.env.CLOUDINARY_URL
+    params: {
+      folder: "blogpost-Mongo",
+    },
+  }),
+}).single("cover")
+const cloudinaryAvatarUploader = multer({
+  storage: new CloudinaryStorage({
+    cloudinary, // search automatically for process.env.CLOUDINARY_URL
+    params: {
+      folder: "blogpostAvatar-Mongo",
+    },
+  }),
+}).single("avatar")
 
 const blogsRouter = express.Router()
 // POST ***********************************************
@@ -65,9 +85,29 @@ blogsRouter.delete("/:blogId", async (req, res, next) => {
     if (deltedBlog) {
       res.send({ message: `USER WITH ID ${req.params.blogId} DELTED SUCCESSFULLY!` })
     } else {
-      next(createHttpError(404, `Blog witth id${eq.params.blogId} found!`))
+      next(createHttpError(404, `Blog witth id${req.params.blogId} found!`))
     }
   } catch (error) {
+    next(error)
+  }
+})
+// *********************************************** IMAGE UPLOAD ***********************************************
+blogsRouter.post("/:blogId/uploadSingleCover", cloudinaryUploader, async (req, res, next) => {
+  try {
+    const updateBlog = await BlogsModel.findByIdAndUpdate(
+      req.params.blogId,
+      { cover: req.file.path },
+      {
+        new: true,
+      }
+    )
+    if (updateBlog) {
+      res.send(updateBlog)
+    } else {
+      next(createHttpError(404, `Blog witth id${req.params.blogId} found!`))
+    }
+  } catch (error) {
+    console.log(error)
     next(error)
   }
 })
