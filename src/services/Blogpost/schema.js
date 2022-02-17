@@ -20,16 +20,7 @@ const blogSchema = new Schema(
       },
     },
     //   *************************************
-    author: {
-      name: {
-        type: String,
-        required: true,
-      },
-      avatar: {
-        type: String,
-        required: false,
-      },
-    },
+    author: [{ type: Schema.Types.ObjectId, ref: "Author" }],
 
     //   *************************************
     content: { type: String, required: false },
