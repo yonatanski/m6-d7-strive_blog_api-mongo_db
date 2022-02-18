@@ -37,4 +37,17 @@ const blogSchema = new Schema(
     timestamps: true,
   }
 )
+blogSchema.static("findBlogssWithAuthors", async function (mongoQuery) {
+  const total = await this.countDocuments(mongoQuery.criteria) // If I use a normal function (not an arrow) here, the "this" keyword will give me the possibility to access to BooksModel
+  const blogs = await this.find(mongoQuery.criteria)
+    .limit(mongoQuery.options.limit)
+    .skip(mongoQuery.options.skip)
+    .sort(mongoQuery.options.sort) // no matter in which order you call this options, Mongo will ALWAYS do SORT, SKIP, LIMIT in this order
+    .populate({
+      path: "author",
+      select: "name avatar",
+    })
+  return { total, blogs }
+})
+
 export default model("Blog", blogSchema)

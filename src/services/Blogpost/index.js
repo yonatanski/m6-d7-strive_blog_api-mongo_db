@@ -37,15 +37,17 @@ blogsRouter.post("/", async (req, res, next) => {
 // GET ***********************************************
 blogsRouter.get("/", async (req, res, next) => {
   try {
-    console.log("QUERY ", req.query)
-    console.log("QUERY-TO-MONGO: ", q2m(req.query))
-    const getBlog = await BlogsModel.find()
+    // console.log("QUERY ", req.query)
+    // console.log("QUERY-TO-MONGO: ", q2m(req.query))
+    const mongoQuery = q2m(req.query)
+    const { total, blogs } = await BlogsModel.findBlogssWithAuthors(mongoQuery)
 
-    if (getBlog) {
-      res.send(getBlog)
-    } else {
-      next(createHttpError(404, `Blog not found!`))
-    }
+    res.send({
+      links: mongoQuery.links("/blogposts", total),
+      total,
+      totalPages: Math.ceil(total / mongoQuery.options.limit),
+      blogs,
+    })
   } catch (error) {
     next(error)
   }
@@ -55,7 +57,7 @@ blogsRouter.get("/:blogId", async (req, res, next) => {
   try {
     const getBlog = await BlogsModel.findById(req.params.blogId).populate({
       path: "author",
-      select: "name avatar"
+      select: "name avatar",
     })
 
     if (getBlog) {
