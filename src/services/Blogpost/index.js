@@ -57,7 +57,7 @@ blogsRouter.get("/:blogId", async (req, res, next) => {
   try {
     const getBlog = await BlogsModel.findById(req.params.blogId).populate({
       path: "author",
-      select: "name avatar",
+      select: "name surname avatar",
     })
 
     if (getBlog) {

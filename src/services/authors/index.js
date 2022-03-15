@@ -3,6 +3,7 @@ import AuthorModel from "./schema.js"
 import multer from "multer" // it is middleware
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
+import { basicAuthMiddleware } from "../Auth/basic.js"
 
 const cloudinaryAvatarUploader = multer({
   storage: new CloudinaryStorage({
@@ -25,8 +26,10 @@ authorsRouter.post("/", async (req, res, next) => {
   }
 })
 
-authorsRouter.get("/", async (req, res, next) => {
+authorsRouter.get("/", basicAuthMiddleware, async (req, res, next) => {
   try {
+    const Author = await AuthorModel.find()
+    res.send(Author)
   } catch (error) {
     next(error)
   }
@@ -34,6 +37,8 @@ authorsRouter.get("/", async (req, res, next) => {
 
 authorsRouter.get("/:authorId", async (req, res, next) => {
   try {
+    const Author = await AuthorModel.findById(req.params.authorId)
+    res.send(Author)
   } catch (error) {
     next(error)
   }
