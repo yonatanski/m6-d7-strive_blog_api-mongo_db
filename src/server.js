@@ -4,6 +4,7 @@ import cors from "cors"
 import mongoose from "mongoose"
 import blogsRouter from "./services/Blogpost/index.js"
 import authorsRouter from "./services/authors/index.js"
+import { unauthorizedHandler, catchAllHandler, forbiddenHandler } from "./errorHandlers.js"
 
 const server = express()
 const port = process.env.PORT || 3001
@@ -14,6 +15,11 @@ server.use(express.json())
 // ************************************* ROUTES ********************************************
 server.use("/blogposts", blogsRouter)
 server.use("/authors", authorsRouter)
+// ************************************* ERROR MIDDLEWARES ***************************************.
+
+server.use(unauthorizedHandler)
+server.use(forbiddenHandler)
+server.use(catchAllHandler)
 
 mongoose.connect(process.env.MONGO_CONNECTION)
 
