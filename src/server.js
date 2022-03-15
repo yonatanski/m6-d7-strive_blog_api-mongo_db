@@ -4,7 +4,7 @@ import cors from "cors"
 import mongoose from "mongoose"
 import blogsRouter from "./services/Blogpost/index.js"
 import authorsRouter from "./services/authors/index.js"
-authorsRouter
+
 const server = express()
 const port = process.env.PORT || 3001
 
