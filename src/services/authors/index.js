@@ -76,7 +76,7 @@ authorsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
   }
 })
 
-authorsRouter.get("/:authorId", async (req, res, next) => {
+authorsRouter.get("/:authorId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const Author = await AuthorModel.findById(req.params.authorId)
     res.send(Author)
@@ -93,7 +93,7 @@ authorsRouter.put("/me", JWTAuthMiddleware, async (req, res, next) => {
   }
 })
 
-authorsRouter.put("/:authorId", async (req, res, next) => {
+authorsRouter.put("/:authorId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
   } catch (error) {
     next(error)
@@ -101,14 +101,14 @@ authorsRouter.put("/:authorId", async (req, res, next) => {
 })
 authorsRouter.delete("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    await UsersModel.findByIdAndDelete(req.author._id)
+    await AuthorModel.findByIdAndDelete(req.author._id)
     res.send()
   } catch (error) {
     next(error)
   }
 })
 
-authorsRouter.delete("/:authorId", async (req, res, next) => {
+authorsRouter.delete("/:authorId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
   } catch (error) {
     next(error)
