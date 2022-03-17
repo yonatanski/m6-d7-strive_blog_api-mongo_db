@@ -5,6 +5,7 @@ import multer from "multer" // it is middleware
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
 import q2m from "query-to-mongo"
+import { basicAuthMiddleware } from "../Auth/basic.js"
 
 const cloudinaryUploader = multer({
   storage: new CloudinaryStorage({
@@ -27,7 +28,7 @@ const blogsRouter = express.Router()
 // POST ***********************************************
 blogsRouter.post("/", async (req, res, next) => {
   try {
-    const newBlog = new BlogsModel(req.body)
+    const newBlog = new BlogsModel({ ...req.body, author: req.author.id })
     const { _id } = await newBlog.save()
     res.status(201).send({ _id })
   } catch (error) {
@@ -35,7 +36,7 @@ blogsRouter.post("/", async (req, res, next) => {
   }
 })
 // GET ***********************************************
-blogsRouter.get("/", async (req, res, next) => {
+blogsRouter.get("/", basicAuthMiddleware, async (req, res, next) => {
   try {
     // console.log("QUERY ", req.query)
     // console.log("QUERY-TO-MONGO: ", q2m(req.query))
