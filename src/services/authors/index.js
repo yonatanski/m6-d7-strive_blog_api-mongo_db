@@ -1,5 +1,6 @@
 import express from "express"
 import AuthorModel from "./schema.js"
+import passport from "passport"
 import multer from "multer" // it is middleware
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
@@ -30,6 +31,22 @@ authorsRouter.get("/", basicAuthMiddleware, async (req, res, next) => {
   try {
     const Author = await AuthorModel.find()
     res.send(Author)
+  } catch (error) {
+    next(error)
+  }
+})
+authorsRouter.get("/googleLogin", passport.authenticate("google", { scope: ["email", "profile"] }))
+authorsRouter.get("/googleRedirect", passport.authenticate("google"), (req, res, next) => {
+  try {
+    // passport middleware will receive the response from Google, then we gonna execute the route handler
+    console.log(req.author.token)
+    // res.send({ token: req.user.token })
+
+    if (req.author.role === "Admin") {
+      res.redirect(`${process.env.FE_URL}/admin?accessToken=${req.author.token}`)
+    } else {
+      res.redirect(`${process.env.FE_URL}/profile?accessToken=${req.author.token}`)
+    }
   } catch (error) {
     next(error)
   }
