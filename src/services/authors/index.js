@@ -1,5 +1,6 @@
 import express from "express"
 import AuthorModel from "./schema.js"
+import BlogsModel from "../Blogpost/schema.js"
 import multer from "multer" // it is middleware
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
@@ -26,6 +27,16 @@ authorsRouter.post("/", async (req, res, next) => {
   }
 })
 
+authorsRouter.get("/me/stories", basicAuthMiddleware, async (req, res, next) => {
+  try {
+    const posts = await BlogsModel.find({ author: req.author._id.toString() })
+
+    res.status(200).send(posts)
+  } catch (error) {
+    next(error)
+  }
+})
+
 authorsRouter.get("/", basicAuthMiddleware, async (req, res, next) => {
   try {
     const Author = await AuthorModel.find()
@@ -35,7 +46,7 @@ authorsRouter.get("/", basicAuthMiddleware, async (req, res, next) => {
   }
 })
 
-authorsRouter.get("/:authorId", async (req, res, next) => {
+authorsRouter.get("/:authorId", basicAuthMiddleware, async (req, res, next) => {
   try {
     const Author = await AuthorModel.findById(req.params.authorId)
     res.send(Author)
@@ -44,14 +55,14 @@ authorsRouter.get("/:authorId", async (req, res, next) => {
   }
 })
 
-authorsRouter.put("/:authorId", async (req, res, next) => {
+authorsRouter.put("/:authorId", basicAuthMiddleware, async (req, res, next) => {
   try {
   } catch (error) {
     next(error)
   }
 })
 
-authorsRouter.delete("/:authorId", async (req, res, next) => {
+authorsRouter.delete("/:authorId", basicAuthMiddleware, async (req, res, next) => {
   try {
   } catch (error) {
     next(error)
