@@ -13,6 +13,13 @@ export const forbiddenHandler = (err, req, res, next) => {
     next(err)
   }
 }
+export const Notfound = (err, req, res, next) => {
+  if (err.status === 404) {
+    res.status(403).send({ message: err.message || "Not Found" })
+  } else {
+    next(err)
+  }
+}
 
 export const catchAllHandler = (err, req, res, next) => {
   console.log(err)

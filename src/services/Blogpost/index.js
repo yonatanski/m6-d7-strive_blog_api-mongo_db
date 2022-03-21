@@ -6,6 +6,7 @@ import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
 import q2m from "query-to-mongo"
 import { basicAuthMiddleware } from "../Auth/basic.js"
+import onlyOwner from "../Auth/onlyOwner.js"
 
 const cloudinaryUploader = multer({
   storage: new CloudinaryStorage({
@@ -26,15 +27,16 @@ const cloudinaryAvatarUploader = multer({
 
 const blogsRouter = express.Router()
 // POST ***********************************************
-blogsRouter.post("/", async (req, res, next) => {
+blogsRouter.post("/", basicAuthMiddleware, async (req, res, next) => {
   try {
-    const newBlog = new BlogsModel({ ...req.body, author: req.author.id })
+    const newBlog = new BlogsModel({ ...req.body, author: [req.author._id] })
     const { _id } = await newBlog.save()
     res.status(201).send({ _id })
   } catch (error) {
     next(error)
   }
 })
+
 // GET ***********************************************
 blogsRouter.get("/", basicAuthMiddleware, async (req, res, next) => {
   try {
@@ -54,7 +56,7 @@ blogsRouter.get("/", basicAuthMiddleware, async (req, res, next) => {
   }
 })
 // GET WITH ID ***********************************************
-blogsRouter.get("/:blogId", async (req, res, next) => {
+blogsRouter.get("/:blogId", basicAuthMiddleware, async (req, res, next) => {
   try {
     const getBlog = await BlogsModel.findById(req.params.blogId).populate({
       path: "author",
@@ -71,35 +73,37 @@ blogsRouter.get("/:blogId", async (req, res, next) => {
   }
 })
 // PUT WITH ID ***********************************************
-blogsRouter.put("/:blogId", async (req, res, next) => {
+blogsRouter.put("/:blogId", basicAuthMiddleware, async (req, res, next) => {
   try {
-    const updateBlog = await BlogsModel.findByIdAndUpdate(req.params.blogId, req.body, {
-      new: true,
-    })
+    const updateBlog = await BlogsModel.findOne({ id: req.params.blogId, author: { $in: [req.author._id] } })
+    console.log(updateBlog)
 
     if (updateBlog) {
-      res.send(updateBlog)
+      await updateBlog.update(req.body)
+      res.send()
     } else {
-      next(createHttpError(404, `Blog witth id${eq.params.blogId} found!`))
+      next(createHttpError(404, `Blog witth id${req.params.blogId} Not found!`))
     }
   } catch (error) {
     next(error)
   }
 })
 // DELETE WITH ID ***********************************************
-blogsRouter.delete("/:blogId", async (req, res, next) => {
+blogsRouter.delete("/:blogId", basicAuthMiddleware, onlyOwner, async (req, res, next) => {
   try {
-    const deltedBlog = await BlogsModel.findByIdAndDelete(req.params.blogId)
+    const blog = req.blog
 
-    if (deltedBlog) {
-      res.send({ message: `USER WITH ID ${req.params.blogId} DELTED SUCCESSFULLY!` })
+    if (!blog) {
+      res.status(404).send({ message: `blog with ${req.params.blogId} is not found!` })
     } else {
-      next(createHttpError(404, `Blog witth id${req.params.blogId} found!`))
+      await BlogsModel.findByIdAndDelete(req.params.blogId)
+      res.status(204).send()
     }
   } catch (error) {
-    next(error)
+    res.send(500).send({ message: error.message })
   }
 })
+
 // *********************************************** Route for COMMENTS ***********************************************
 
 blogsRouter.post("/:blogId/comments", async (req, res, next) => {
