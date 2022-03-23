@@ -5,6 +5,8 @@ import multer from "multer" // it is middleware
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
 import q2m from "query-to-mongo"
+import { JWTAuthMiddleware } from "../Auth/token.js"
+import { adminOnlyMiddleware } from "../Auth/authorOnOnly.js"
 
 const cloudinaryUploader = multer({
   storage: new CloudinaryStorage({
@@ -25,9 +27,9 @@ const cloudinaryAvatarUploader = multer({
 
 const blogsRouter = express.Router()
 // POST ***********************************************
-blogsRouter.post("/", async (req, res, next) => {
+blogsRouter.post("/", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const newBlog = new BlogsModel(req.body)
+    const newBlog = new BlogsModel({ ...req.body, author: [req.author._id] })
     const { _id } = await newBlog.save()
     res.status(201).send({ _id })
   } catch (error) {
@@ -35,7 +37,7 @@ blogsRouter.post("/", async (req, res, next) => {
   }
 })
 // GET ***********************************************
-blogsRouter.get("/", async (req, res, next) => {
+blogsRouter.get("/", JWTAuthMiddleware, async (req, res, next) => {
   try {
     // console.log("QUERY ", req.query)
     // console.log("QUERY-TO-MONGO: ", q2m(req.query))
@@ -53,7 +55,7 @@ blogsRouter.get("/", async (req, res, next) => {
   }
 })
 // GET WITH ID ***********************************************
-blogsRouter.get("/:blogId", async (req, res, next) => {
+blogsRouter.get("/:blogId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const getBlog = await BlogsModel.findById(req.params.blogId).populate({
       path: "author",
@@ -70,7 +72,7 @@ blogsRouter.get("/:blogId", async (req, res, next) => {
   }
 })
 // PUT WITH ID ***********************************************
-blogsRouter.put("/:blogId", async (req, res, next) => {
+blogsRouter.put("/:blogId", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const updateBlog = await BlogsModel.findByIdAndUpdate(req.params.blogId, req.body, {
       new: true,
@@ -86,7 +88,7 @@ blogsRouter.put("/:blogId", async (req, res, next) => {
   }
 })
 // DELETE WITH ID ***********************************************
-blogsRouter.delete("/:blogId", async (req, res, next) => {
+blogsRouter.delete("/:blogId", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const deltedBlog = await BlogsModel.findByIdAndDelete(req.params.blogId)
 
