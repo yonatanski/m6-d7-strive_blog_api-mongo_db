@@ -8,6 +8,7 @@ import { JWTAuthMiddleware } from "../Auth/token.js"
 import createError from "http-errors"
 import { authenticateUser } from "../Auth/tools.js"
 import { adminOnlyMiddleware } from "../Auth/authorOnOnly.js"
+import BlogsModel from "../Blogpost/schema.js"
 
 const cloudinaryAvatarUploader = multer({
   storage: new CloudinaryStorage({
@@ -18,10 +19,7 @@ const cloudinaryAvatarUploader = multer({
   }),
 }).single("avatar")
 
-
 const authorsRouter = express.Router()
-
-
 
 authorsRouter.post("/registration", async (req, res, next) => {
   try {
@@ -32,7 +30,6 @@ authorsRouter.post("/registration", async (req, res, next) => {
     next(error)
   }
 })
-
 
 authorsRouter.post("/login", async (req, res, next) => {
   try {
@@ -63,8 +60,6 @@ authorsRouter.post("/login", async (req, res, next) => {
 //   }
 // })
 
-
-
 authorsRouter.get("/", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const Author = await AuthorModel.find()
@@ -77,6 +72,15 @@ authorsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const author = await AuthorModel.findById(req.author._id)
     res.send(author)
+  } catch (error) {
+    next(error)
+  }
+})
+authorsRouter.get("/me/stories", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const posts = await BlogsModel.find({ author: req.author._id.toString() })
+
+    res.status(200).send(posts)
   } catch (error) {
     next(error)
   }
