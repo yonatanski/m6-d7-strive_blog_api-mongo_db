@@ -18,7 +18,21 @@ const cloudinaryAvatarUploader = multer({
   }),
 }).single("avatar")
 
+
 const authorsRouter = express.Router()
+
+
+
+authorsRouter.post("/registration", async (req, res, next) => {
+  try {
+    const newAuthor = new AuthorModel(req.body)
+    const { _id } = await newAuthor.save()
+    res.status(201).send({ _id })
+  } catch (error) {
+    next(error)
+  }
+})
+
 
 authorsRouter.post("/login", async (req, res, next) => {
   try {
@@ -34,30 +48,22 @@ authorsRouter.post("/login", async (req, res, next) => {
     next(error)
   }
 })
-authorsRouter.post("/registration", async (req, res, next) => {
-  try {
-    const { email, password } = req.body
-    const Author = await AuthorModel.checkCredentials(email, password)
-    if (Author) {
-      const accessToken = await authenticateUser(Author)
-      res.send({ accessToken })
-    } else {
-      next(createError(401, "Credentials are not ok!"))
-    }
-  } catch (error) {
-    next(error)
-  }
-})
+// authorsRouter.post("/registration", async (req, res, next) => {
+//   try {
+//     const { email, password } = req.body
+//     const Author = await AuthorModel.checkCredentials(email, password)
+//     if (Author) {
+//       const accessToken = await authenticateUser(Author)
+//       res.send({ accessToken })
+//     } else {
+//       next(createError(401, "Credentials are not ok!"))
+//     }
+//   } catch (error) {
+//     next(error)
+//   }
+// })
 
-authorsRouter.post("/", async (req, res, next) => {
-  try {
-    const newAuthor = new AuthorModel(req.body)
-    const { _id } = await newAuthor.save()
-    res.status(201).send({ _id })
-  } catch (error) {
-    next(error)
-  }
-})
+
 
 authorsRouter.get("/", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
