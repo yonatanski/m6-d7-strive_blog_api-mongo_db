@@ -1,6 +1,7 @@
 import express from "express"
 import AuthorModel from "./schema.js"
 import multer from "multer" // it is middleware
+import passport from "passport"
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
 import { basicAuthMiddleware } from "../Auth/basic.js"
@@ -85,6 +86,26 @@ authorsRouter.get("/me/stories", JWTAuthMiddleware, async (req, res, next) => {
     next(error)
   }
 })
+// *********************************************************Oauth route handler *********************************************************
+authorsRouter.get("/googleLogin", passport.authenticate("google", { scope: ["email", "profile"] }))
+
+authorsRouter.get("/googleRedirect", passport.authenticate("google"), (req, res, next) => {
+  try {
+    // passport middleware will receive the response from Google, then we gonna execute the route handler
+    console.log("google response", req.user.token)
+    // res.send({ token: req.user.token })
+
+    if (req.user.role === "Admin") {
+      res.redirect(`${process.env.FE_URL}/admin?accessToken=${req.user.token}`)
+    } else {
+      res.redirect(`${process.env.FE_URL}/profile?accessToken=${req.user.token}`)
+    }
+  } catch (error) {
+    console.log("im the error", error)
+    next(error)
+  }
+})
+// ******************************************************** // // ********************************************************
 
 authorsRouter.get("/:authorId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
