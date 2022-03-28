@@ -55,7 +55,7 @@ blogsRouter.get("/", JWTAuthMiddleware, async (req, res, next) => {
   }
 })
 // GET WITH ID ***********************************************
-blogsRouter.get("/:blogId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
+blogsRouter.get("/:blogId", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const getBlog = await BlogsModel.findById(req.params.blogId).populate({
       path: "author",
@@ -65,14 +65,14 @@ blogsRouter.get("/:blogId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, 
     if (getBlog) {
       res.send(getBlog)
     } else {
-      next(createHttpError(404, `Blog witth id${eq.params.blogId} found!`))
+      next(createHttpError(404, `Blog witth id${req.params.blogId} found!`))
     }
   } catch (error) {
     next(error)
   }
 })
 // PUT WITH ID ***********************************************
-blogsRouter.put("/:blogId", JWTAuthMiddleware, async (req, res, next) => {
+blogsRouter.put("/:blogId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const updateBlog = await BlogsModel.findByIdAndUpdate(req.params.blogId, req.body, {
       new: true,
@@ -88,7 +88,7 @@ blogsRouter.put("/:blogId", JWTAuthMiddleware, async (req, res, next) => {
   }
 })
 // DELETE WITH ID ***********************************************
-blogsRouter.delete("/:blogId", JWTAuthMiddleware, async (req, res, next) => {
+blogsRouter.delete("/:blogId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     const deltedBlog = await BlogsModel.findByIdAndDelete(req.params.blogId)
 
@@ -103,7 +103,7 @@ blogsRouter.delete("/:blogId", JWTAuthMiddleware, async (req, res, next) => {
 })
 // *********************************************** Route for COMMENTS ***********************************************
 
-blogsRouter.post("/:blogId/comments", async (req, res, next) => {
+blogsRouter.post("/:blogId/comments", JWTAuthMiddleware, async (req, res, next) => {
   try {
     console.log("request params id,", req.params.blogId)
     console.log("request params id,", req.body)
@@ -121,7 +121,7 @@ blogsRouter.post("/:blogId/comments", async (req, res, next) => {
     next(error)
   }
 })
-blogsRouter.get("/:blogId/comments", async (req, res, next) => {
+blogsRouter.get("/:blogId/comments", JWTAuthMiddleware, async (req, res, next) => {
   try {
     console.log("request params id,", req.params.blogId)
     console.log("request params id,", req.body)
@@ -137,23 +137,23 @@ blogsRouter.get("/:blogId/comments", async (req, res, next) => {
     next(error)
   }
 })
-blogsRouter.get("/:blogId/comments", async (req, res, next) => {
-  try {
-    console.log("request params id,", req.params.blogId)
-    console.log("request params id,", req.body)
-    const newComment = req.body
+// blogsRouter.get("/:blogId/comments", async (req, res, next) => {
+//   try {
+//     console.log("request params id,", req.params.blogId)
+//     console.log("request params id,", req.body)
+//     const newComment = req.body
 
-    const getBlog = await BlogsModel.findById(req.params.blogId)
+//     const getBlog = await BlogsModel.findById(req.params.blogId)
 
-    console.log(getBlog)
-    if (getBlog) {
-      res.send(getBlog.comment)
-    }
-  } catch (error) {
-    next(error)
-  }
-})
-blogsRouter.get("/:blogId/comments/:commentId", async (req, res, next) => {
+//     console.log(getBlog)
+//     if (getBlog) {
+//       res.send(getBlog.comment)
+//     }
+//   } catch (error) {
+//     next(error)
+//   }
+// })
+blogsRouter.get("/:blogId/comments/:commentId", JWTAuthMiddleware, async (req, res, next) => {
   try {
     console.log("request params id,", req.params.blogId)
     console.log("request params id,", req.body)
@@ -172,7 +172,7 @@ blogsRouter.get("/:blogId/comments/:commentId", async (req, res, next) => {
     next(error)
   }
 })
-blogsRouter.put("/:blogId/comments/:commentId", async (req, res, next) => {
+blogsRouter.put("/:blogId/comments/:commentId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     console.log("request params id,", req.params.blogId)
     console.log("request params id,", req.body)
@@ -198,7 +198,7 @@ blogsRouter.put("/:blogId/comments/:commentId", async (req, res, next) => {
     next(error)
   }
 })
-blogsRouter.delete("/:blogId/comments/:commentId", async (req, res, next) => {
+blogsRouter.delete("/:blogId/comments/:commentId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {
     console.log("request params id,", req.params.blogId)
     console.log("request params id,", req.body)
@@ -219,7 +219,7 @@ blogsRouter.delete("/:blogId/comments/:commentId", async (req, res, next) => {
 // *********************************************** END for COMMENTS ***********************************************
 
 // *********************************************** IMAGE UPLOAD ***********************************************
-blogsRouter.post("/:blogId/uploadSingleCover", cloudinaryUploader, async (req, res, next) => {
+blogsRouter.post("/:blogId/uploadSingleCover", cloudinaryUploader, JWTAuthMiddleware, async (req, res, next) => {
   try {
     const updateBlog = await BlogsModel.findByIdAndUpdate(
       req.params.blogId,
