@@ -7,6 +7,7 @@ import { CloudinaryStorage } from "multer-storage-cloudinary"
 import q2m from "query-to-mongo"
 import { JWTAuthMiddleware } from "../Auth/token.js"
 import { adminOnlyMiddleware } from "../Auth/authorOnOnly.js"
+import { generateBlogPDF } from "../Utils/pdf/index.js"
 
 const cloudinaryUploader = multer({
   storage: new CloudinaryStorage({
@@ -94,6 +95,25 @@ blogsRouter.delete("/:blogId", JWTAuthMiddleware, adminOnlyMiddleware, async (re
 
     if (deltedBlog) {
       res.send({ message: `USER WITH ID ${req.params.blogId} DELTED SUCCESSFULLY!` })
+    } else {
+      next(createHttpError(404, `Blog witth id${req.params.blogId} found!`))
+    }
+  } catch (error) {
+    next(error)
+  }
+})
+
+// *********************************************** Route for PDF ***********************************************
+blogsRouter.get("/:blogId/pdf", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const findBlog = await BlogsModel.findById(req.params.blogId)
+    console.log("find Blod---->", findBlog)
+
+    if (findBlog) {
+      const pdfStream = await generateBlogPDF(findBlog)
+      res.setHeader("Content-Type", "application/pdf")
+      pdfStream.pipe(res)
+      pdfStream.end()
     } else {
       next(createHttpError(404, `Blog witth id${req.params.blogId} found!`))
     }
