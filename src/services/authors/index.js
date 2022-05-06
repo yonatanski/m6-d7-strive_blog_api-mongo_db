@@ -2,6 +2,9 @@ import express from "express"
 import AuthorModel from "./schema.js"
 import multer from "multer" // it is middleware
 import passport from "passport"
+import json2csv from "json2csv"
+import { pipeline } from "stream"
+import { promisify } from "util"
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
 import { basicAuthMiddleware } from "../Auth/basic.js"
@@ -60,6 +63,26 @@ authorsRouter.post("/login", async (req, res, next) => {
 //     next(error)
 //   }
 // })
+// is not working well
+authorsRouter.get("/downloadCSV", async (req, res, next) => {
+  try {
+    // SOURCE (books.json) --> TRANSFORM (csv) --> DESTINATION (res)
+    const asyncPipeline = promisify(pipeline)
+
+    const source = await AuthorModel.find()
+
+    console.log("source", source)
+    const transform = new json2csv.Transform({ fields: ["id", "name", "surname", "email", "avatar", "password", "role", "googleId"] })
+    res.setHeader("Content-Disposition", "attachment; filename=books.csv")
+    const destination = res
+
+    await asyncPipeline(source, transform, destination, (err) => {
+      if (err) next(err)
+    })
+  } catch (error) {
+    next(error)
+  }
+})
 
 authorsRouter.get("/", JWTAuthMiddleware, adminOnlyMiddleware, async (req, res, next) => {
   try {

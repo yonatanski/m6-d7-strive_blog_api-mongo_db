@@ -2,12 +2,14 @@ import express from "express"
 import createHttpError from "http-errors"
 import BlogsModel from "./schema.js"
 import multer from "multer" // it is middleware
+import json2csv from "json2csv"
+import { pipeline } from "stream"
 import { v2 as cloudinary } from "cloudinary"
 import { CloudinaryStorage } from "multer-storage-cloudinary"
 import q2m from "query-to-mongo"
 import { JWTAuthMiddleware } from "../Auth/token.js"
 import { adminOnlyMiddleware } from "../Auth/authorOnOnly.js"
-import { generateBlogPDF } from "../Utils/pdf/index.js"
+import { generateBlogPDF, generatePDFAsync } from "../Utils/pdf/index.js"
 
 const cloudinaryUploader = multer({
   storage: new CloudinaryStorage({
@@ -55,6 +57,35 @@ blogsRouter.get("/", JWTAuthMiddleware, async (req, res, next) => {
     next(error)
   }
 })
+// *********************************************** Route for PDF Save on backedn for difrent use***********************************************
+blogsRouter.get("/asyncPDF", async (req, res, next) => {
+  try {
+    const path = await generatePDFAsync("yo whatsapp")
+    res.send({ path })
+  } catch (error) {
+    next(error)
+  }
+})
+blogsRouter.get("/downloadCSV", async (req, res, next) => {
+  try {
+    // SOURCE (books.json) --> TRANSFORM (csv) --> DESTINATION (res)
+
+    res.setHeader("Content-Disposition", "attachment; filename=books.csv")
+
+    const source = BlogsModel.find()
+
+    console.log("source", source)
+    const transform = new json2csv.Transform({ fields: ["category", "title", "cover", "readTime", "author", "content", "comment"] })
+    const destination = res
+
+    pipeline(source, transform, destination, (err) => {
+      if (err) next(err)
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
 // GET WITH ID ***********************************************
 blogsRouter.get("/:blogId", JWTAuthMiddleware, async (req, res, next) => {
   try {
@@ -82,7 +113,7 @@ blogsRouter.put("/:blogId", JWTAuthMiddleware, adminOnlyMiddleware, async (req, 
     if (updateBlog) {
       res.send(updateBlog)
     } else {
-      next(createHttpError(404, `Blog witth id${eq.params.blogId} found!`))
+      next(createHttpError(404, `Blog witth id${req.params.blogId} found!`))
     }
   } catch (error) {
     next(error)
@@ -104,14 +135,16 @@ blogsRouter.delete("/:blogId", JWTAuthMiddleware, adminOnlyMiddleware, async (re
 })
 
 // *********************************************** Route for PDF ***********************************************
-blogsRouter.get("/:blogId/pdf", JWTAuthMiddleware, async (req, res, next) => {
+
+blogsRouter.get("/:blogId/pdf", async (req, res, next) => {
   try {
     const findBlog = await BlogsModel.findById(req.params.blogId)
-    console.log("find Blod---->", findBlog)
+    console.log("find Blod---->", findBlog.title)
 
     if (findBlog) {
       const pdfStream = await generateBlogPDF(findBlog)
-      res.setHeader("Content-Type", "application/pdf")
+      res.setHeader("Content-Disposition", `attachment; filename=${findBlog.title}.pdf`)
+
       pdfStream.pipe(res)
       pdfStream.end()
     } else {
@@ -121,6 +154,7 @@ blogsRouter.get("/:blogId/pdf", JWTAuthMiddleware, async (req, res, next) => {
     next(error)
   }
 })
+
 // *********************************************** Route for COMMENTS ***********************************************
 
 blogsRouter.post("/:blogId/comments", JWTAuthMiddleware, async (req, res, next) => {
